@@ -1,73 +1,173 @@
-# Welcome to your Lovable project
 
-## Project info
+# Book API - Spring Boot REST Application
 
-**URL**: https://lovable.dev/projects/5df10309-5ca2-4cf5-b250-4b5dac961322
+A comprehensive Spring Boot REST API application for managing a book library system.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- 📚 Complete CRUD operations for books
+- 🔍 Search books by author or genre
+- ✅ Input validation with proper error handling
+- 📊 API statistics endpoint
+- 🛡️ Global exception handling
+- 📋 Clean layered architecture
+- 🚀 RESTful API design with proper HTTP status codes
 
-**Use Lovable**
+## API Endpoints
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5df10309-5ca2-4cf5-b250-4b5dac961322) and start prompting.
+### Books Management
 
-Changes made via Lovable will be committed automatically to this repo.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/books` | Get all books (supports filtering by author/genre) |
+| GET | `/api/books/{id}` | Get book by ID |
+| POST | `/api/books` | Create a new book |
+| PUT | `/api/books/{id}` | Update an existing book |
+| DELETE | `/api/books/{id}` | Delete a book |
+| GET | `/api/books/stats` | Get book statistics |
 
-**Use your preferred IDE**
+### Query Parameters
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- `?author=authorName` - Filter books by author
+- `?genre=genreName` - Filter books by genre
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Sample API Calls
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Get All Books
+```bash
+curl -X GET http://localhost:8080/api/books
 ```
 
-**Edit a file directly in GitHub**
+### Get Book by ID
+```bash
+curl -X GET http://localhost:8080/api/books/1
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Create a New Book
+```bash
+curl -X POST http://localhost:8080/api/books \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "The Catcher in the Rye",
+    "author": "J.D. Salinger",
+    "isbn": "978-0-316-76948-0",
+    "publicationYear": 1951,
+    "genre": "Fiction",
+    "description": "A controversial novel about teenage rebellion"
+  }'
+```
 
-**Use GitHub Codespaces**
+### Update a Book
+```bash
+curl -X PUT http://localhost:8080/api/books/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "The Great Gatsby - Updated",
+    "author": "F. Scott Fitzgerald",
+    "isbn": "978-0-7432-7356-5",
+    "publicationYear": 1925,
+    "genre": "Classic Fiction",
+    "description": "An updated classic American novel"
+  }'
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Delete a Book
+```bash
+curl -X DELETE http://localhost:8080/api/books/1
+```
 
-## What technologies are used for this project?
+### Search Books by Author
+```bash
+curl -X GET "http://localhost:8080/api/books?author=Fitzgerald"
+```
 
-This project is built with:
+### Search Books by Genre
+```bash
+curl -X GET "http://localhost:8080/api/books?genre=Fiction"
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Running the Application
 
-## How can I deploy this project?
+### Prerequisites
+- Java 17 or higher
+- Maven 3.6 or higher
 
-Simply open [Lovable](https://lovable.dev/projects/5df10309-5ca2-4cf5-b250-4b5dac961322) and click on Share -> Publish.
+### Steps
+1. Clone the repository
+2. Navigate to the project directory
+3. Run the application:
+   ```bash
+   mvn spring-boot:run
+   ```
+4. The API will be available at `http://localhost:8080`
 
-## Can I connect a custom domain to my Lovable project?
+### Alternative: Using Maven Wrapper
+```bash
+./mvnw spring-boot:run
+```
 
-Yes, you can!
+## Project Structure
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```
+src/
+├── main/
+│   ├── java/com/example/bookapi/
+│   │   ├── BookApiApplication.java          # Main application class
+│   │   ├── controller/
+│   │   │   └── BookController.java          # REST controller
+│   │   ├── service/
+│   │   │   └── BookService.java             # Business logic
+│   │   ├── model/
+│   │   │   └── Book.java                    # Book entity
+│   │   ├── dto/
+│   │   │   └── ApiResponse.java             # Response wrapper
+│   │   └── exception/
+│   │       └── GlobalExceptionHandler.java  # Exception handling
+│   └── resources/
+│       └── application.properties           # Configuration
+└── pom.xml                                  # Maven dependencies
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## API Response Format
+
+All API responses follow a consistent format:
+
+```json
+{
+  "success": true,
+  "message": "Operation successful",
+  "data": { ... },
+  "timestamp": "2023-12-07T10:30:00"
+}
+```
+
+## Sample Data
+
+The application comes pre-loaded with sample books:
+- The Great Gatsby by F. Scott Fitzgerald
+- To Kill a Mockingbird by Harper Lee
+- 1984 by George Orwell
+
+## Error Handling
+
+The application includes comprehensive error handling:
+- Validation errors (400 Bad Request)
+- Resource not found (404 Not Found)
+- Duplicate ISBN (409 Conflict)
+- Internal server errors (500 Internal Server Error)
+
+## Technologies Used
+
+- **Spring Boot 3.2.0** - Framework
+- **Java 17** - Programming language
+- **Maven** - Build tool
+- **Spring Web** - REST API
+- **Spring Validation** - Input validation
+- **Jackson** - JSON processing
+
+## Development Features
+
+- Hot reload with Spring Boot DevTools
+- Detailed logging configuration
+- CORS enabled for cross-origin requests
+- Clean separation of concerns
