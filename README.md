@@ -1,19 +1,56 @@
 
-# Book API - Spring Boot REST Application
+# Book API with MFA Management - Spring Boot REST Application
 
-A comprehensive Spring Boot REST API application for managing a book library system.
+A comprehensive Spring Boot REST API application for managing a book library system with Multi-Factor Authentication (MFA) support.
 
 ## Features
 
 - 📚 Complete CRUD operations for books
+- 👤 User management with registration and authentication
+- 🔐 Multi-Factor Authentication (MFA) with TOTP support
+- 🔑 Backup codes for MFA recovery
+- 📱 Device management for MFA
 - 🔍 Search books by author or genre
 - ✅ Input validation with proper error handling
-- 📊 API statistics endpoint
+- 📊 API statistics endpoints
 - 🛡️ Global exception handling
 - 📋 Clean layered architecture
 - 🚀 RESTful API design with proper HTTP status codes
 
 ## API Endpoints
+
+### Authentication Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register a new user |
+| POST | `/api/auth/login` | Login with username/email and password (+ MFA code if enabled) |
+| POST | `/api/auth/verify-email` | Verify user email address |
+| POST | `/api/auth/reset-password` | Request password reset |
+| GET | `/api/auth/me` | Get current user profile |
+
+### User Management Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/users` | Get all users |
+| GET | `/api/users/{id}` | Get user by ID |
+| PUT | `/api/users/{id}` | Update user profile |
+| DELETE | `/api/users/{id}` | Delete user account |
+| GET | `/api/users/stats` | Get user statistics |
+
+### MFA Management Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/mfa/setup/totp` | Setup TOTP authenticator device |
+| POST | `/api/mfa/verify` | Verify MFA setup with code |
+| GET | `/api/mfa/devices` | Get user's MFA devices |
+| DELETE | `/api/mfa/devices/{deviceId}` | Delete MFA device |
+| PUT | `/api/mfa/devices/{deviceId}/activate` | Activate MFA device |
+| PUT | `/api/mfa/devices/{deviceId}/deactivate` | Deactivate MFA device |
+| POST | `/api/mfa/backup-codes/regenerate` | Regenerate backup codes |
+| GET | `/api/mfa/status` | Get MFA status for user |
 
 ### Books Management
 
@@ -26,21 +63,62 @@ A comprehensive Spring Boot REST API application for managing a book library sys
 | DELETE | `/api/books/{id}` | Delete a book |
 | GET | `/api/books/stats` | Get book statistics |
 
-### Query Parameters
-
-- `?author=authorName` - Filter books by author
-- `?genre=genreName` - Filter books by genre
-
 ## Sample API Calls
 
-### Get All Books
+### User Registration
 ```bash
-curl -X GET http://localhost:8080/api/books
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "johndoe",
+    "email": "john@example.com",
+    "password": "password123",
+    "firstName": "John",
+    "lastName": "Doe"
+  }'
 ```
 
-### Get Book by ID
+### User Login
 ```bash
-curl -X GET http://localhost:8080/api/books/1
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "usernameOrEmail": "johndoe",
+    "password": "password123"
+  }'
+```
+
+### Login with MFA
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "usernameOrEmail": "johndoe",
+    "password": "password123",
+    "mfaCode": "123456"
+  }'
+```
+
+### Setup TOTP MFA
+```bash
+curl -X POST "http://localhost:8080/api/mfa/setup/totp?userId=1&deviceName=My%20Phone" \
+  -H "Content-Type: application/json"
+```
+
+### Verify MFA Setup
+```bash
+curl -X POST "http://localhost:8080/api/mfa/verify?deviceId=1&code=123456" \
+  -H "Content-Type: application/json"
+```
+
+### Get User's MFA Devices
+```bash
+curl -X GET "http://localhost:8080/api/mfa/devices?userId=1"
+```
+
+### Get MFA Status
+```bash
+curl -X GET "http://localhost:8080/api/mfa/status?userId=1"
 ```
 
 ### Create a New Book
@@ -57,34 +135,25 @@ curl -X POST http://localhost:8080/api/books \
   }'
 ```
 
-### Update a Book
-```bash
-curl -X PUT http://localhost:8080/api/books/1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "The Great Gatsby - Updated",
-    "author": "F. Scott Fitzgerald",
-    "isbn": "978-0-7432-7356-5",
-    "publicationYear": 1925,
-    "genre": "Classic Fiction",
-    "description": "An updated classic American novel"
-  }'
-```
+## MFA Workflow
 
-### Delete a Book
-```bash
-curl -X DELETE http://localhost:8080/api/books/1
-```
+1. **User Registration**: Create account with basic information
+2. **MFA Setup**: User initiates TOTP setup, receives QR code and backup codes
+3. **MFA Verification**: User scans QR code in authenticator app and verifies with generated code
+4. **Login with MFA**: User provides username/password + 6-digit TOTP code
+5. **Backup Code Usage**: If authenticator unavailable, user can use 8-digit backup codes
+6. **Device Management**: Users can activate/deactivate/delete MFA devices
 
-### Search Books by Author
-```bash
-curl -X GET "http://localhost:8080/api/books?author=Fitzgerald"
-```
+## Security Features
 
-### Search Books by Genre
-```bash
-curl -X GET "http://localhost:8080/api/books?genre=Fiction"
-```
+- Password-based authentication
+- TOTP-based Multi-Factor Authentication
+- Backup codes for MFA recovery
+- Device management for MFA
+- Email verification workflow
+- Password reset functionality
+- User session management
+- Input validation and sanitization
 
 ## Running the Application
 
@@ -114,15 +183,24 @@ src/
 │   ├── java/com/example/bookapi/
 │   │   ├── BookApiApplication.java          # Main application class
 │   │   ├── controller/
-│   │   │   └── BookController.java          # REST controller
+│   │   │   ├── AuthController.java          # Authentication endpoints
+│   │   │   ├── MfaController.java           # MFA management endpoints
+│   │   │   ├── UserController.java          # User management endpoints
+│   │   │   └── BookController.java          # Book management endpoints
 │   │   ├── service/
-│   │   │   └── BookService.java             # Business logic
+│   │   │   ├── UserService.java             # User business logic
+│   │   │   ├── MfaService.java              # MFA business logic
+│   │   │   └── BookService.java             # Book business logic
 │   │   ├── model/
+│   │   │   ├── User.java                    # User entity
+│   │   │   ├── MfaDevice.java               # MFA device entity
 │   │   │   └── Book.java                    # Book entity
 │   │   ├── dto/
-│   │   │   └── ApiResponse.java             # Response wrapper
+│   │   │   ├── AuthRequest.java             # Authentication request DTO
+│   │   │   ├── MfaSetupResponse.java        # MFA setup response DTO
+│   │   │   └── ApiResponse.java             # Standard API response wrapper
 │   │   └── exception/
-│   │       └── GlobalExceptionHandler.java  # Exception handling
+│   │       └── GlobalExceptionHandler.java  # Global exception handling
 │   └── resources/
 │       └── application.properties           # Configuration
 └── pom.xml                                  # Maven dependencies
@@ -143,17 +221,17 @@ All API responses follow a consistent format:
 
 ## Sample Data
 
-The application comes pre-loaded with sample books:
-- The Great Gatsby by F. Scott Fitzgerald
-- To Kill a Mockingbird by Harper Lee
-- 1984 by George Orwell
+The application comes pre-loaded with:
+- **Books**: The Great Gatsby, To Kill a Mockingbird, 1984
+- **Users**: Admin user (username: admin, email: admin@example.com, password: password123)
 
 ## Error Handling
 
 The application includes comprehensive error handling:
 - Validation errors (400 Bad Request)
+- Authentication failures (401 Unauthorized)
 - Resource not found (404 Not Found)
-- Duplicate ISBN (409 Conflict)
+- Duplicate username/email (409 Conflict)
 - Internal server errors (500 Internal Server Error)
 
 ## Technologies Used
@@ -171,3 +249,15 @@ The application includes comprehensive error handling:
 - Detailed logging configuration
 - CORS enabled for cross-origin requests
 - Clean separation of concerns
+- In-memory data storage (suitable for development/testing)
+
+## MFA Implementation Notes
+
+- Uses TOTP (Time-based One-Time Password) algorithm
+- Generates QR codes for easy authenticator app setup
+- Provides backup codes for account recovery
+- Supports multiple MFA devices per user
+- Device activation/deactivation functionality
+- Secure secret generation and storage
+
+This implementation provides a solid foundation for a production-ready authentication system with MFA support.
